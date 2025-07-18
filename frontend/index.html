@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Transferencias</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #4a5568;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        /* Formulario */
+        .form-section {
+            background: #f7fafc;
+            padding: 25px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .form-section h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #4a5568;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #718096;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #4a5568;
+        }
+
+        .btn-danger {
+            background: #e53e3e;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c53030;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 14px;
+        }
+
+        /* Tabla */
+        .table-section h2 {
+            color: #2d3748;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #f7fafc;
+            font-weight: bold;
+            color: #4a5568;
+            text-transform: uppercase;
+            font-size: 14px;
+            letter-spacing: 0.5px;
+        }
+
+        tr:hover {
+            background: #f7fafc;
+        }
+
+        .amount {
+            font-weight: bold;
+            color: #2d3748;
+        }
+
+        .actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* Estados */
+        .status {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .status-pending {
+            background: #fef5e7;
+            color: #d69e2e;
+        }
+
+        .status-completed {
+            background: #f0fff4;
+            color: #38a169;
+        }
+
+        /* Mensajes */
+        .message {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .message.success {
+            background: #f0fff4;
+            color: #38a169;
+            border: 1px solid #9ae6b4;
+        }
+
+        .message.error {
+            background: #fed7d7;
+            color: #e53e3e;
+            border: 1px solid #feb2b2;
+        }
+
+        .message.info {
+            background: #ebf8ff;
+            color: #3182ce;
+            border: 1px solid #90cdf4;
+        }
+
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #718096;
+        }
+
+        .loading::after {
+            content: '';
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #e2e8f0;
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s ease-in-out infinite;
+            margin-left: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+            
+            th, td {
+                padding: 10px 8px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>💰 Sistema de Transferencias</h1>
+            <p>Gestión completa de transferencias con API REST</p>
+        </div>
+
+        <div class="content">
+            <!-- Mensajes -->
+            <div id="message-container"></div>
+
+            <!-- Formulario -->
+            <div class="form-section">
+                <h2 id="form-title">➕ Nueva Transferencia</h2>
+                <form id="transfer-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="sender">Remitente:</label>
+                            <input type="text" id="sender" name="sender" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="receiver">Destinatario:</label>
+                            <input type="text" id="receiver" name="receiver" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="amount">Monto (S/):</label>
+                            <input type="number" id="amount" name="amount" step="0.01" min="0" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <button type="submit" class="btn btn-primary" id="submit-btn">
+                            💾 Guardar Transferencia
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="cancelEdit()" id="cancel-btn" style="display: none;">
+                            ❌ Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Tabla -->
+            <div class="table-section">
+                <h2>📋 Lista de Transferencias</h2>
+                <div class="table-container">
+                    <table id="transfers-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Remitente</th>
+                                <th>Destinatario</th>
+                                <th>Monto</th>
+                                <th>Fecha</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transfers-tbody">
+                            <!-- Los datos se cargarán dinámicamente -->
+                        </tbody>
+                    </table>
+                </div>
+                <div id="loading" class="loading" style="display: none;">
+                    Cargando transferencias...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuración
+        const API_BASE_URL = 'http://localhost:3000/transfers';
+        let editingId = null;
+
+        // Elementos del DOM
+        const elements = {
+            form: document.getElementById('transfer-form'),
+            tbody: document.getElementById('transfers-tbody'),
+            loading: document.getElementById('loading'),
+            messageContainer: document.getElementById('message-container'),
+            formTitle: document.getElementById('form-title'),
+            submitBtn: document.getElementById('submit-btn'),
+            cancelBtn: document.getElementById('cancel-btn')
+        };
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', () => {
+            loadTransfers();
+            setupEventListeners();
+        });
+
+        // Configurar event listeners
+        function setupEventListeners() {
+            elements.form.addEventListener('submit', handleSubmit);
+        }
+
+        // Cargar transferencias
+        async function loadTransfers() {
+            showLoading(true);
+            try {
+                const response = await fetch(API_BASE_URL);
+                const result = await response.json();
+                
+                if (response.ok) {
+                    renderTransfers(result.data);
+                    showMessage('success', `✅ ${result.count} transferencias cargadas`);
+                } else {
+                    throw new Error(result.error || 'Error al cargar transferencias');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('error', `❌ Error: ${error.message}`);
+                renderTransfers([]);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Renderizar transferencias en la tabla
+        function renderTransfers(transfers) {
+            if (transfers.length === 0) {
+                elements.tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #718096; padding: 40px;">
+                            📭 No hay transferencias para mostrar
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            elements.tbody.innerHTML = transfers.map(transfer => `
+                <tr>
+                    <td>${transfer.id}</td>
+                    <td>${transfer.sender}</td>
+                    <td>${transfer.receiver}</td>
+                    <td class="amount">S/ ${parseFloat(transfer.amount).toFixed(2)}</td>
+                    <td>${formatDate(transfer.date)}</td>
+                    <td class="actions">
+                        <button class="btn btn-secondary btn-sm" onclick="editTransfer(${transfer.id})" title="Editar">
+                            ✏️ Editar
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteTransfer(${transfer.id})" title="Eliminar">
+                            🗑️ Eliminar
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Manejar envío del formulario
+        async function handleSubmit(event) {
+            event.preventDefault();
+            
+            const formData = new FormData(elements.form);
+            const data = {
+                sender: formData.get('sender'),
+                receiver: formData.get('receiver'),
+                amount: parseFloat(formData.get('amount'))
+            };
+
+            try {
+                const url = editingId ? `${API_BASE_URL}/${editingId}` : API_BASE_URL;
+                const method = editingId ? 'PUT' : 'POST';
+                
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage('success', `✅ ${result.message}`);
+                    resetForm();
+                    await loadTransfers();
+                } else {
+                    throw new Error(result.error || 'Error al guardar');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('error', `❌ Error: ${error.message}`);
+            }
+        }
+
+        // Editar transferencia
+        async function editTransfer(id) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/${id}`);
+                const result = await response.json();
+                
+                if (response.ok) {
+                    const transfer = result.data;
+                    fillForm(transfer);
+                    editingId = id;
+                    elements.formTitle.textContent = '✏️ Editar Transferencia';
+                    elements.submitBtn.textContent = '💾 Actualizar Transferencia';
+                    elements.cancelBtn.style.display = 'inline-block';
+                    showMessage('info', '📝 Modo edición activado');
+                } else {
+                    throw new Error(result.error || 'Error al cargar transferencia');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('error', `❌ Error: ${error.message}`);
+            }
+        }
+
+        // Eliminar transferencia
+        async function deleteTransfer(id) {
+            if (!confirm('¿Estás seguro de que deseas eliminar esta transferencia?')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE_URL}/${id}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showMessage('success', `✅ ${result.message}`);
+                    await loadTransfers();
+                } else {
+                    throw new Error(result.error || 'Error al eliminar');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showMessage('error', `❌ Error: ${error.message}`);
+            }
+        }
+
+        // Llenar formulario con datos
+        function fillForm(transfer) {
+            document.getElementById('sender').value = transfer.sender;
+            document.getElementById('receiver').value = transfer.receiver;
+            document.getElementById('amount').value = transfer.amount;
+        }
+
+        // Resetear formulario
+        function resetForm() {
+            elements.form.reset();
+            editingId = null;
+            elements.formTitle.textContent = '➕ Nueva Transferencia';
+            elements.submitBtn.textContent = '💾 Guardar Transferencia';
+            elements.cancelBtn.style.display = 'none';
+        }
+
+        // Cancelar edición
+        function cancelEdit() {
+            resetForm();
+            showMessage('info', '❌ Edición cancelada');
+        }
+
+        // Mostrar mensajes
+        function showMessage(type, text) {
+            elements.messageContainer.innerHTML = `
+                <div class="message ${type}">
+                    ${text}
+                </div>
+            `;
+            
+            // Auto-remover después de 5 segundos
+            setTimeout(() => {
+                elements.messageContainer.innerHTML = '';
+            }, 5000);
+        }
+
+        // Mostrar/ocultar loading
+        function showLoading(show) {
+            elements.loading.style.display = show ? 'block' : 'none';
+            elements.tbody.style.display = show ? 'none' : 'table-row-group';
+        }
+
+        // Formatear fecha
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('es-PE', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Funciones globales para los botones
+        window.editTransfer = editTransfer;
+        window.deleteTransfer = deleteTransfer;
+        window.cancelEdit = cancelEdit;
+    </script>
+</body>
+</html> 

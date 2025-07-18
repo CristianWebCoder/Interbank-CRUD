@@ -1,0 +1,318 @@
+===========================================
+PLAN DE PRUEBAS JMETER - API DE TRANSFERENCIAS
+===========================================
+
+OBJETIVO: Simular carga de usuarios en el sistema de transferencias
+BACKEND: http://localhost:3000
+ENDPOINTS: /transfers
+
+===========================================
+1. CONFIGURACIÓN INICIAL
+===========================================
+
+1.1. Crear un nuevo Test Plan en JMeter
+   - Nombre: "API Transferencias - Test Plan"
+   - Agregar Thread Group: "Escenarios de Usuarios"
+
+1.2. Configurar Thread Group Principal
+   - Number of Threads (users): 18 (10 + 5 + 3)
+   - Ramp-up period (seconds): 10
+   - Loop Count: 1
+   - Scheduler: No
+
+===========================================
+2. CONFIGURACIÓN DE HEADERS GLOBALES
+===========================================
+
+2.1. Agregar HTTP Header Manager (al Thread Group)
+   - Name: "Global Headers"
+   - Headers:
+     * Content-Type: application/json
+     * Accept: application/json
+     * User-Agent: JMeter-Test-Client/1.0
+
+===========================================
+3. ESCENARIO 1: 10 USUARIOS CREANDO TRANSFERENCIAS (POST)
+===========================================
+
+3.1. Crear Thread Group: "Usuarios Creando Transferencias"
+   - Number of Threads: 10
+   - Ramp-up period: 5
+   - Loop Count: 1
+
+3.2. Agregar HTTP Request Defaults
+   - Name: "POST Defaults"
+   - Protocol: http
+   - Server Name: localhost
+   - Port Number: 3000
+
+3.3. Agregar HTTP Request
+   - Name: "POST /transfers - Crear Transferencia"
+   - Method: POST
+   - Path: /transfers
+   - Body Data (JSON):
+   {
+     "sender": "${__RandomFromMultiple(Juan Pérez|María García|Carlos López|Ana Rodríguez|Luis Martínez|Carmen Silva|Roberto Díaz|Patricia Torres|Fernando Ruiz|Isabel Vargas)}",
+     "receiver": "${__RandomFromMultiple(Alexander Smith|Sarah Johnson|Michael Brown|Emily Davis|David Wilson|Lisa Anderson|James Taylor|Jennifer Martinez|Robert Garcia|Amanda Rodriguez)}",
+     "amount": ${__Random(100,5000)}
+   }
+
+3.4. Agregar Response Assertion
+   - Name: "Validar Respuesta POST"
+   - Apply to: Main sample only
+   - Pattern to test:
+     * "success": true
+     * "message": "Transferencia creada exitosamente"
+   - Assertion type: Contains
+
+3.5. Agregar JSON Extractor (opcional)
+   - Name: "Extraer ID de Transferencia"
+   - Names of created variables: transfer_id
+   - JSON Path expressions: $.data.id
+   - Match No.: 1
+
+===========================================
+4. ESCENARIO 2: 5 USUARIOS LEYENDO TRANSFERENCIAS (GET)
+===========================================
+
+4.1. Crear Thread Group: "Usuarios Leyendo Transferencias"
+   - Number of Threads: 5
+   - Ramp-up period: 3
+   - Loop Count: 2
+
+4.2. Agregar HTTP Request Defaults
+   - Name: "GET Defaults"
+   - Protocol: http
+   - Server Name: localhost
+   - Port Number: 3000
+
+4.3. Agregar HTTP Request
+   - Name: "GET /transfers - Listar Transferencias"
+   - Method: GET
+   - Path: /transfers
+
+4.4. Agregar Response Assertion
+   - Name: "Validar Respuesta GET"
+   - Apply to: Main sample only
+   - Pattern to test:
+     * "success": true
+     * "data":
+   - Assertion type: Contains
+
+4.5. Agregar JSON Extractor
+   - Name: "Extraer IDs para Eliminación"
+   - Names of created variables: transfer_ids
+   - JSON Path expressions: $.data[*].id
+   - Match No.: -1 (todos)
+
+===========================================
+5. ESCENARIO 3: 3 USUARIOS ELIMINANDO TRANSFERENCIAS (DELETE)
+===========================================
+
+5.1. Crear Thread Group: "Usuarios Eliminando Transferencias"
+   - Number of Threads: 3
+   - Ramp-up period: 2
+   - Loop Count: 1
+
+5.2. Agregar HTTP Request Defaults
+   - Name: "DELETE Defaults"
+   - Protocol: http
+   - Server Name: localhost
+   - Port Number: 3000
+
+5.3. Agregar HTTP Request
+   - Name: "DELETE /transfers/{id} - Eliminar Transferencia"
+   - Method: DELETE
+   - Path: /transfers/${transfer_id}
+   - Nota: Usar variable extraída del GET anterior
+
+5.4. Agregar Response Assertion
+   - Name: "Validar Respuesta DELETE"
+   - Apply to: Main sample only
+   - Pattern to test:
+     * "success": true
+     * "message": "Transferencia eliminada exitosamente"
+   - Assertion type: Contains
+
+===========================================
+6. CONFIGURACIÓN DE MONITOREO
+===========================================
+
+6.1. Agregar View Results Tree
+   - Name: "Árbol de Resultados"
+   - Filename: results-tree.jtl
+
+6.2. Agregar View Results in Table
+   - Name: "Tabla de Resultados"
+   - Filename: results-table.jtl
+
+6.3. Agregar Aggregate Report
+   - Name: "Reporte Agregado"
+   - Filename: aggregate-report.jtl
+
+6.4. Agregar Response Time Graph
+   - Name: "Gráfico de Tiempo de Respuesta"
+   - Filename: response-time.jtl
+
+===========================================
+7. CONFIGURACIÓN DE TIMERS (OPCIONAL)
+===========================================
+
+7.1. Agregar Constant Timer
+   - Name: "Pausa entre Requests"
+   - Thread Delay: 1000 (1 segundo)
+
+7.2. Agregar Random Timer
+   - Name: "Pausa Aleatoria"
+   - Constant Delay Offset: 500
+   - Random Delay Maximum: 1500
+
+===========================================
+8. VARIABLES Y DATOS DINÁMICOS
+===========================================
+
+8.1. CSV Data Set Config (opcional)
+   - Filename: test-data.csv
+   - Variable Names: sender,receiver,amount
+   - Delimiter: ,
+   - Recycle on EOF: true
+   - Stop thread on EOF: false
+
+8.2. Contenido del archivo test-data.csv:
+   sender,receiver,amount
+   "Juan Pérez","María García",1500.50
+   "Carlos López","Ana Rodríguez",2500.75
+   "Luis Martínez","Carmen Silva",800.25
+   "Roberto Díaz","Patricia Torres",3200.00
+   "Fernando Ruiz","Isabel Vargas",1200.80
+
+===========================================
+9. ESCENARIO COMPLETO CON FLUJO
+===========================================
+
+9.1. Crear Thread Group: "Flujo Completo"
+   - Number of Threads: 5
+   - Ramp-up period: 5
+   - Loop Count: 1
+
+9.2. Secuencia de Requests:
+   1. POST /transfers (crear)
+   2. GET /transfers (listar)
+   3. GET /transfers/{id} (obtener específica)
+   4. PUT /transfers/{id} (actualizar)
+   5. DELETE /transfers/{id} (eliminar)
+
+9.3. HTTP Request: "PUT /transfers/{id} - Actualizar"
+   - Method: PUT
+   - Path: /transfers/${transfer_id}
+   - Body Data:
+   {
+     "sender": "Usuario Actualizado",
+     "receiver": "Destinatario Actualizado",
+     "amount": ${__Random(200,3000)}
+   }
+
+===========================================
+10. CONFIGURACIÓN DE ASSERTIONS AVANZADAS
+===========================================
+
+10.1. Response Assertion para Códigos HTTP
+    - Name: "Validar Códigos HTTP"
+    - Apply to: Main sample only
+    - Pattern to test: 200|201
+    - Assertion type: Equals
+
+10.2. Duration Assertion
+    - Name: "Validar Tiempo de Respuesta"
+    - Duration to assert: 2000 (2 segundos)
+
+10.3. Size Assertion
+    - Name: "Validar Tamaño de Respuesta"
+    - Size to assert: 100
+    - Assertion type: Greater than
+
+===========================================
+11. CONFIGURACIÓN DE LISTENERS
+===========================================
+
+11.1. Simple Data Writer
+    - Filename: test-results.jtl
+    - Write results to file: true
+
+11.2. Backend Listener (para Grafana)
+    - Name: "Backend Listener"
+    - Classname: kg.apc.jmeter.reporters.InfluxDBBackendListenerClient
+    - InfluxDB URL: http://localhost:8086
+    - Database: jmeter
+    - Measurement: jmeter
+
+===========================================
+12. EJECUCIÓN Y MONITOREO
+===========================================
+
+12.1. Antes de ejecutar:
+    - Verificar que el backend esté corriendo en localhost:3000
+    - Limpiar resultados anteriores
+    - Configurar el número de hilos según capacidad del servidor
+
+12.2. Durante la ejecución:
+    - Monitorear CPU y memoria del servidor
+    - Verificar logs del backend
+    - Observar tiempos de respuesta
+
+12.3. Después de la ejecución:
+    - Revisar reportes generados
+    - Analizar errores y excepciones
+    - Generar gráficos de rendimiento
+
+===========================================
+13. EXPECTATIVAS DE RENDIMIENTO
+===========================================
+
+13.1. Métricas esperadas:
+    - Tiempo de respuesta promedio: < 500ms
+    - Tiempo de respuesta 95%: < 1000ms
+    - Tasa de error: < 1%
+    - Throughput: > 50 requests/segundo
+
+13.2. Umbrales de alerta:
+    - Tiempo de respuesta > 2000ms
+    - Tasa de error > 5%
+    - Throughput < 10 requests/segundo
+
+===========================================
+14. COMANDOS DE EJECUCIÓN
+===========================================
+
+14.1. Ejecutar desde línea de comandos:
+    jmeter -n -t test-plan.jmx -l results.jtl -e -o report/
+
+14.2. Ejecutar con parámetros:
+    jmeter -n -t test-plan.jmx -Jthreads=10 -Jrampup=5 -l results.jtl
+
+14.3. Ejecutar en modo GUI:
+    jmeter -t test-plan.jmx
+
+===========================================
+15. ANÁLISIS DE RESULTADOS
+===========================================
+
+15.1. Métricas clave a revisar:
+    - Average Response Time
+    - 95th Percentile
+    - Error Rate
+    - Throughput
+    - Active Threads
+
+15.2. Gráficos importantes:
+    - Response Time Over Time
+    - Throughput Over Time
+    - Active Threads Over Time
+    - Response Time Distribution
+
+===========================================
+FIN DEL PLAN DE PRUEBAS
+===========================================
+
+Nota: Este plan debe adaptarse según las necesidades específicas
+y la capacidad del servidor de pruebas. 
